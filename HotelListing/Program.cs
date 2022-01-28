@@ -2,6 +2,7 @@ using HotelListing.Data;
 using Serilog;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using HotelListing.Configurations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,7 +21,12 @@ builder.Services.AddCors(o =>
     .AllowAnyMethod()
     .AllowAnyHeader());
 });
-builder.Services.AddSwaggerGen();
+builder.Services.AddAutoMapper(typeof(MapperInitilizer));
+
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "HotelListing", Version="v1" });
+});
 builder.Host.UseSerilog((ctx, lc) => lc
     .WriteTo.File(path: "c:\\hotellistings\\logs\\log-.txt",
     outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{level:u3}] {Message:lj}{NewLine}{Exception}",
