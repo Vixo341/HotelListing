@@ -3,6 +3,11 @@ using Serilog;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using HotelListing.Configurations;
+using HotelListing.IRepository;
+using HotelListing.Repository;
+using Microsoft.AspNetCore.Identity;
+using HotelListing;
+using HotelListing.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +19,11 @@ builder.Services.AddDbContext<DatabaseContext>(options =>
 }); 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+
+builder.Services.AddAuthentication();
+builder.Services.ConfigureIdentity();
+builder.Services.ConfigureJWT(builder.Configuration);
+
 builder.Services.AddCors(o =>
 {
     o.AddPolicy("CorsPolicy", builder =>
@@ -22,51 +32,50 @@ builder.Services.AddCors(o =>
     .AllowAnyHeader());
 });
 builder.Services.AddAutoMapper(typeof(MapperInitilizer));
+builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IAuthManager, AuthManager>();
+builder.Services.AddSwaggerGen();
 
-builder.Services.AddSwaggerGen(c =>
-{
-    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "HotelListing", Version="v1" });
-});
+
 builder.Host.UseSerilog((ctx, lc) => lc
     .WriteTo.File(path: "c:\\hotellistings\\logs\\log-.txt",
     outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{level:u3}] {Message:lj}{NewLine}{Exception}",
     rollingInterval: RollingInterval.Day,
     restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Information)
     );
+builder.Services.AddControllers().AddNewtonsoftJson(op =>
+            op.SerializerSettings.ReferenceLoopHandling =
+                Newtonsoft.Json.ReferenceLoopHandling.Ignore);
 
-try
-{
-    Log.Information("Application is starting");
+
     var app = builder.Build();
     // Configure the HTTP request pipeline.
     if (!app.Environment.IsDevelopment())
     {
         app.UseExceptionHandler("/Error");
         app.UseSwagger();
-        app.UseSwaggerUI();
-        // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-        app.UseHsts();
+        app.UseSwaggerUI(c =>
+    {
+        string swaggerJsonBasePath = string.IsNullOrWhiteSpace(c.RoutePrefix) ? "." : "..";
+        c.SwaggerEndpoint($"{swaggerJsonBasePath}/swagger/v1/swagger.json", "Hotel Listing API");
+    });
+    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseHsts();
     }
+
 
     app.UseHttpsRedirection();
     app.UseStaticFiles();
 
     app.UseRouting();
-
+    app.UseAuthentication();
     app.UseAuthorization();
-
-    app.MapRazorPages();
+    app.UseEndpoints(endpoints =>
+    {
+        endpoints.MapControllers();
+    });
+app.MapRazorPages();
     app.UseCors("CorsPolicy");
 
     app.Run();
-}
-catch (Exception ex)
-{
-
-    Log.Fatal(ex, "Application failed to start");
-}
-finally
-{
-    Log.CloseAndFlush();
-}
 
