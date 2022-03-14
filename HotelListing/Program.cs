@@ -2,14 +2,14 @@ using HotelListing.Data;
 using Serilog;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using HotelListing.Configurations;
-using HotelListing.IRepository;
-using HotelListing.Repository;
 using Microsoft.AspNetCore.Identity;
 using HotelListing;
-using HotelListing.Services;
 using Microsoft.AspNetCore.Mvc;
 using AspNetCoreRateLimit;
+using HotelListing.Core;
+using HotelListing.Core.IRepository;
+using HotelListing.Core.Repository;
+using HotelListing.Core.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,7 +35,7 @@ builder.Services.AddCors(o =>
     .AllowAnyMethod()
     .AllowAnyHeader());
 });
-builder.Services.AddAutoMapper(typeof(MapperInitilizer));
+builder.Services.ConfigureAutomapper();
 builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IAuthManager, AuthManager>();
 builder.Services.AddSwaggerGen();

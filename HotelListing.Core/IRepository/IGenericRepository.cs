@@ -2,7 +2,7 @@
 using System.Linq.Expressions;
 using X.PagedList.Mvc.PagedListExt;
 
-namespace HotelListing.IRepository
+namespace HotelListing.Core.IRepository
 {
     public interface IGenericRepository<T> where T : class
     {

@@ -3,15 +3,20 @@ using HotelListing.Data;
 using HotelListing.Models;
 using Marvin.Cache.Headers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Versioning;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
+using System.Reflection;
 using System.Text;
 
-namespace HotelListing
+namespace HotelListing.Core
 {
     public static class ServiceExtensions
     {
@@ -47,6 +52,11 @@ namespace HotelListing
             });
         }
 
+
+        public static void ConfigureAutomapper(this IServiceCollection services)
+        {
+            services.AddAutoMapper(Assembly.GetExecutingAssembly());
+        }
 
 
         public static void ConfigureExceptionHandler(this IApplicationBuilder app)
