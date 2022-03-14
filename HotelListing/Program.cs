@@ -8,6 +8,8 @@ using HotelListing.Repository;
 using Microsoft.AspNetCore.Identity;
 using HotelListing;
 using HotelListing.Services;
+using Microsoft.AspNetCore.Mvc;
+using AspNetCoreRateLimit;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +22,8 @@ builder.Services.AddDbContext<DatabaseContext>(options =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
+
+builder.Services.AddResponseCaching();
 builder.Services.AddAuthentication();
 builder.Services.ConfigureIdentity();
 builder.Services.ConfigureJWT(builder.Configuration);
@@ -43,10 +47,18 @@ builder.Host.UseSerilog((ctx, lc) => lc
     rollingInterval: RollingInterval.Day,
     restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Information)
     );
-builder.Services.AddControllers().AddNewtonsoftJson(op =>
+builder.Services.AddControllers(config =>
+{
+    config.CacheProfiles.Add("120SecondsDuration", new CacheProfile
+    {
+        Duration = 120
+
+    });
+}).AddNewtonsoftJson(op =>
             op.SerializerSettings.ReferenceLoopHandling =
                 Newtonsoft.Json.ReferenceLoopHandling.Ignore);
 
+builder.Services.ConfigureVersioning();
 
     var app = builder.Build();
     // Configure the HTTP request pipeline.
@@ -63,10 +75,11 @@ builder.Services.AddControllers().AddNewtonsoftJson(op =>
     app.UseHsts();
     }
 
-
+    app.ConfigureExceptionHandler();
     app.UseHttpsRedirection();
     app.UseStaticFiles();
-
+    app.UseIpRateLimiting();
+    app.UseResponseCaching();
     app.UseRouting();
     app.UseAuthentication();
     app.UseAuthorization();
@@ -76,6 +89,5 @@ builder.Services.AddControllers().AddNewtonsoftJson(op =>
     });
 app.MapRazorPages();
     app.UseCors("CorsPolicy");
-
     app.Run();
 
